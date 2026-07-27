@@ -1,6 +1,11 @@
-const { buildClubs } = require('./_data');
+const { getAll, buildClubsFrom } = require('./_store');
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.status(200).json(buildClubs());
+  try {
+    const matches = await getAll();
+    res.status(200).json(buildClubsFrom(matches));
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal memuat data. Pastikan Vercel KV sudah terhubung ke project.', detail: err.message });
+  }
 };
