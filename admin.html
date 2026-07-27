@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Kelola Jadwal & Skor</title>
+<meta name="robots" content="noindex, nofollow" />
+<style>
+  :root {
+    --bg: #0b0b14;
+    --panel: #14141f;
+    --border: #26263a;
+    --purple: #6d5bd0;
+    --text: #e6e6f0;
+    --muted: #8888a0;
+    --live: #ff4d5e;
+    --green: #2ecc71;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: 24px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 14px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+  #loginBox {
+    max-width: 360px;
+    margin: 80px auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+  }
+  #loginBox input {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 14px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #0f0f18;
+    color: var(--text);
+    font-size: 14px;
+  }
+  button {
+    background: var(--purple);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  button:hover { opacity: 0.9; }
+  button.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  button.danger {
+    background: rgba(255,77,94,0.15);
+    color: var(--live);
+    border: 1px solid rgba(255,77,94,0.35);
+  }
+
+  #dashboard { display: none; max-width: 900px; margin: 0 auto; }
+  #globalError {
+    display: none;
+    background: rgba(255,77,94,0.12);
+    border: 1px solid rgba(255,77,94,0.4);
+    color: var(--live);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .league-input {
+    font-weight: 700;
+    font-size: 13px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    border-bottom: 1px dashed var(--border);
+    padding: 2px 0;
+    width: 160px;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge.live { background: rgba(255,77,94,0.15); color: var(--live); }
+  .badge.upcoming { background: rgba(109,91,208,0.2); color: #a292f5; }
+  .badge.ended { background: rgba(136,136,160,0.2); color: var(--muted); }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .team-input {
+    font-size: 14px;
+    font-weight: 600;
+    background: #0f0f18;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--text);
+    width: 100%;
+  }
+  .score-input {
+    width: 48px;
+    text-align: center;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #0f0f18;
+    color: var(--text);
+    font-weight: 700;
+  }
+  .score-group { display: flex; align-items: center; gap: 6px; justify-content: center; }
+
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 7px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #0f0f18;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .status-msg { font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .status-msg.ok { color: var(--green); }
+  .status-msg.err { color: var(--live); }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+
+  #addForm { display: none; }
+</style>
+</head>
+<body>
+
+  <div id="loginBox">
+    <h1>Admin Panel</h1>
+    <p class="sub">Masukkan token admin</p>
+    <input type="password" id="tokenInput" placeholder="Admin token" />
+    <br />
+    <button onclick="login()">Masuk</button>
+    <p class="status-msg err" id="loginMsg"></p>
+  </div>
+
+  <div id="dashboard">
+    <div class="toolbar">
+      <div>
+        <h1>Kelola Jadwal & Skor</h1>
+        <p class="sub">Tambah pertandingan baru, ubah jadwal/tim, update skor live — semua manual</p>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="secondary" onclick="toggleAddForm()">+ Pertandingan Baru</button>
+        <button class="secondary" onclick="logout()">Keluar</button>
+      </div>
+    </div>
+
+    <div id="globalError"></div>
+
+    <div class="card" id="addForm">
+      <h2>Tambah Pertandingan Baru</h2>
+      <div class="row">
+        <input class="team-input" id="new-home" placeholder="Nama tim home" />
+        <span>vs</span>
+        <input class="team-input" id="new-away" placeholder="Nama tim away" />
+      </div>
+      <div class="fields">
+        <div class="field"><label>Liga</label><input id="new-league" placeholder="Contoh: Liga 1" /></div>
+        <div class="field"><label>Waktu</label><input id="new-time" placeholder="2026-07-28 19:00 WIB" /></div>
+        <div class="field">
+          <label>Status</label>
+          <select id="new-status">
+            <option value="upcoming">Upcoming</option>
+            <option value="live">Live</option>
+            <option value="ended">Ended</option>
+          </select>
+        </div>
+        <div class="field"><label>Warna Home</label><input id="new-homeColor" placeholder="#1F4D2E" /></div>
+        <div class="field"><label>Warna Away</label><input id="new-awayColor" placeholder="#1F4D2E" /></div>
+        <div class="field">
+          <label>Tipe Stream</label>
+          <select id="new-streamType">
+            <option value="iframe">iframe</option>
+            <option value="m3u8">m3u8</option>
+          </select>
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>URL Stream</label>
+          <input id="new-streamUrl" placeholder="https://..." />
+        </div>
+      </div>
+      <div class="actions">
+        <span></span>
+        <button onclick="createMatch()">Simpan Pertandingan</button>
+      </div>
+      <p class="status-msg" id="msg-new"></p>
+    </div>
+
+    <div id="matchList"></div>
+  </div>
+
+<script>
+  const API_ADMIN = "/api/admin/matches";
+
+  function getToken() { return sessionStorage.getItem("admin_token"); }
+  function authHeaders() {
+    return { "Content-Type": "application/json", "x-admin-token": getToken() };
+  }
+
+  function login() {
+    const val = document.getElementById("tokenInput").value.trim();
+    if (!val) return;
+    sessionStorage.setItem("admin_token", val);
+    loadDashboard();
+  }
+
+  function logout() {
+    sessionStorage.removeItem("admin_token");
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("loginBox").style.display = "block";
+  }
+
+  function toggleAddForm() {
+    const el = document.getElementById("addForm");
+    el.style.display = el.style.display === "block" ? "none" : "block";
+  }
+
+  function showGlobalError(msg) {
+    const el = document.getElementById("globalError");
+    if (!msg) { el.style.display = "none"; return; }
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  async function loadDashboard() {
+    try {
+      const res = await fetch(API_ADMIN, { headers: authHeaders() });
+
+      if (res.status === 401) {
+        document.getElementById("loginMsg").textContent = "Token salah.";
+        return;
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      showGlobalError(null);
+      renderMatches(data.matches || []);
+    } catch (err) {
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      showGlobalError(
+        "Gagal memuat data: " + err.message +
+        " — kemungkinan Vercel KV belum terhubung ke project. Cek Storage tab di dashboard Vercel."
+      );
+    }
+  }
+
+  function renderMatches(matches) {
+    const container = document.getElementById("matchList");
+    container.innerHTML = "";
+
+    if (matches.length === 0) {
+      container.innerHTML = '<p class="sub">Belum ada pertandingan. Klik "+ Pertandingan Baru" untuk menambah.</p>';
+      return;
+    }
+
+    matches.forEach((m) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-head">
+          <input class="league-input" id="league-${m.id}" value="${m.league || ""}" />
+          <span class="badge ${m.status}">${m.status}</span>
+        </div>
+        <div class="row">
+          <input class="team-input" id="home-${m.id}" value="${m.home || ""}" />
+          <div class="score-group">
+            <input type="number" class="score-input" id="homeScore-${m.id}" value="${m.homeScore ?? 0}" />
+            <span>-</span>
+            <input type="number" class="score-input" id="awayScore-${m.id}" value="${m.awayScore ?? 0}" />
+          </div>
+          <input class="team-input" id="away-${m.id}" value="${m.away || ""}" style="text-align:right" />
+        </div>
+        <div class="fields">
+          <div class="field">
+            <label>Status</label>
+            <select id="status-${m.id}">
+              <option value="upcoming" ${m.status === "upcoming" ? "selected" : ""}>Upcoming</option>
+              <option value="live" ${m.status === "live" ? "selected" : ""}>Live</option>
+              <option value="ended" ${m.status === "ended" ? "selected" : ""}>Ended</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Waktu / Jadwal</label>
+            <input id="time-${m.id}" value="${m.time || ""}" />
+          </div>
+          <div class="field">
+            <label>Skor HT</label>
+            <input id="ht-${m.id}" value="${m.htScore || "-"}" />
+          </div>
+          <div class="field">
+            <label>Corner Home</label>
+            <input type="number" id="cornerHome-${m.id}" value="${m.cornerHome || 0}" />
+          </div>
+          <div class="field">
+            <label>Corner Away</label>
+            <input type="number" id="cornerAway-${m.id}" value="${m.cornerAway || 0}" />
+          </div>
+          <div class="field">
+            <label>URL Stream</label>
+            <input id="streamUrl-${m.id}" value="${m.streamUrl || ""}" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="danger" onclick="deleteMatch('${m.id}')">Hapus</button>
+          <button onclick="saveMatch('${m.id}')">Simpan Perubahan</button>
+        </div>
+        <p class="status-msg" id="msg-${m.id}"></p>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  async function saveMatch(id) {
+    const msgEl = document.getElementById(`msg-${id}`);
+    msgEl.textContent = "Menyimpan...";
+    msgEl.className = "status-msg";
+
+    const payload = {
+      id,
+      league: document.getElementById(`league-${id}`).value,
+      home: document.getElementById(`home-${id}`).value,
+      away: document.getElementById(`away-${id}`).value,
+      title: `${document.getElementById(`home-${id}`).value} vs ${document.getElementById(`away-${id}`).value}`,
+      homeScore: Number(document.getElementById(`homeScore-${id}`).value),
+      awayScore: Number(document.getElementById(`awayScore-${id}`).value),
+      status: document.getElementById(`status-${id}`).value,
+      time: document.getElementById(`time-${id}`).value,
+      htScore: document.getElementById(`ht-${id}`).value,
+      cornerHome: Number(document.getElementById(`cornerHome-${id}`).value),
+      cornerAway: Number(document.getElementById(`cornerAway-${id}`).value),
+      streamUrl: document.getElementById(`streamUrl-${id}`).value
+    };
+
+    try {
+      const res = await fetch(API_ADMIN, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Gagal menyimpan");
+      }
+
+      msgEl.textContent = "Tersimpan ✓";
+      msgEl.className = "status-msg ok";
+      loadDashboard();
+    } catch (err) {
+      msgEl.textContent = "Error: " + err.message;
+      msgEl.className = "status-msg err";
+    }
+  }
+
+  async function deleteMatch(id) {
+    if (!confirm("Yakin hapus pertandingan ini?")) return;
+    try {
+      const res = await fetch(`${API_ADMIN}?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: authHeaders()
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Gagal menghapus");
+      }
+      loadDashboard();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  async function createMatch() {
+    const msgEl = document.getElementById("msg-new");
+    msgEl.textContent = "Menyimpan...";
+    msgEl.className = "status-msg";
+
+    const payload = {
+      home: document.getElementById("new-home").value,
+      away: document.getElementById("new-away").value,
+      league: document.getElementById("new-league").value,
+      time: document.getElementById("new-time").value,
+      status: document.getElementById("new-status").value,
+      homeColor: document.getElementById("new-homeColor").value || "#1F4D2E",
+      awayColor: document.getElementById("new-awayColor").value || "#1F4D2E",
+      streamType: document.getElementById("new-streamType").value,
+      streamUrl: document.getElementById("new-streamUrl").value
+    };
+
+    if (!payload.home || !payload.away) {
+      msgEl.textContent = "Nama tim home & away wajib diisi.";
+      msgEl.className = "status-msg err";
+      return;
+    }
+
+    try {
+      const res = await fetch(API_ADMIN, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Gagal menambah");
+      }
+
+      msgEl.textContent = "Pertandingan ditambahkan ✓";
+      msgEl.className = "status-msg ok";
+      ["new-home","new-away","new-league","new-time","new-homeColor","new-awayColor","new-streamUrl"]
+        .forEach(id => document.getElementById(id).value = "");
+      loadDashboard();
+    } catch (err) {
+      msgEl.textContent = "Error: " + err.message;
+      msgEl.className = "status-msg err";
+    }
+  }
+
+  if (getToken()) loadDashboard();
+</script>
+</body>
+</html>
