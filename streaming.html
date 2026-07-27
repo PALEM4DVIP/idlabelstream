@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KICKOFF — Siaran Langsung</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pitch-dark:#0B0714;
+    --pitch:#140F22;
+    --ink:#0B0714;
+    --panel:#171025;
+    --panel-2:#1C1430;
+    --purple:#7C5CFC;
+    --purple-dim:#4B3A8F;
+    --gold:#F5B942;
+    --live:#F0384A;
+    --border:rgba(255,255,255,0.08);
+    --glass:rgba(255,255,255,0.04);
+    --glass-hover:rgba(255,255,255,0.08);
+    --text:#F2F0F7;
+    --text-muted:#9791AE;
+    --text-faint:#645C7C;
+    --font-display:'Poppins', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(124,92,252,0.16), transparent 60%),
+      var(--pitch-dark);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  ::selection{background:var(--purple); color:#fff;}
+  ::-webkit-scrollbar{height:6px; width:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--purple-dim); border-radius:6px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  .ticker-bar{
+    background:var(--pitch);
+    border-bottom:1px solid var(--border);
+    overflow:hidden;
+    white-space:nowrap;
+    padding:9px 0;
+  }
+  .ticker-track{
+    display:inline-flex;
+    gap:48px;
+    animation:scrollTicker 28s linear infinite;
+    padding-left:100%;
+  }
+  @keyframes scrollTicker{
+    from{transform:translateX(0);}
+    to{transform:translateX(-100%);}
+  }
+  .ticker-item{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--text-muted);
+  }
+  .ticker-item b{color:var(--text); font-weight:500;}
+  .dot-live{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--live);
+    box-shadow:0 0 0 0 rgba(217,51,63,0.6);
+    animation:pulseDot 1.6s ease-out infinite;
+    flex-shrink:0;
+  }
+  @keyframes pulseDot{
+    0%{box-shadow:0 0 0 0 rgba(217,51,63,0.55);}
+    70%{box-shadow:0 0 0 7px rgba(217,51,63,0);}
+    100%{box-shadow:0 0 0 0 rgba(217,51,63,0);}
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    max-width:1180px;
+    margin:0 auto;
+    padding:24px 28px 8px;
+  }
+  .logo{
+    font-family:var(--font-display);
+    font-size:23px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  .logo .ball{
+    width:10px;height:10px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--purple), #B48CFF);
+    box-shadow:0 0 0 2px rgba(124,92,252,0.35);
+  }
+  .back-link{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-muted);
+    letter-spacing:0.06em;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .back-link:hover{color:var(--purple);}
+
+  .hero-wrap{
+    max-width:1180px;
+    margin:22px auto 0;
+    padding:0 28px;
+  }
+  .hero-meta{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .live-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    background:rgba(217,51,63,0.12);
+    border:1px solid rgba(217,51,63,0.4);
+    color:var(--live);
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    padding:5px 10px 5px 8px;
+    border-radius:20px;
+    text-transform:uppercase;
+  }
+  .live-badge.is-upcoming{
+    background:var(--glass);
+    border-color:var(--border);
+    color:var(--text-muted);
+  }
+  .live-badge.is-upcoming .dot-live{background:var(--text-faint); animation:none; box-shadow:none;}
+
+  #match-league{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:8px;
+  }
+  #match-title{
+    font-family:var(--font-display);
+    font-size:clamp(22px, 4vw, 34px);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    margin:0 0 4px;
+    line-height:1.05;
+  }
+  #match-time{
+    font-family:var(--font-mono);
+    color:var(--text-muted);
+    font-size:13px;
+    margin:0 0 16px;
+  }
+
+  .player-frame{
+    position:relative;
+    padding:14px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:6px;
+  }
+  .corner{
+    position:absolute;
+    width:22px;height:22px;
+    border-color:var(--gold);
+    border-style:solid;
+    opacity:0.9;
+  }
+  .corner.tl{top:-1px;left:-1px;border-width:3px 0 0 3px;border-top-left-radius:6px;}
+  .corner.tr{top:-1px;right:-1px;border-width:3px 3px 0 0;border-top-right-radius:6px;}
+  .corner.bl{bottom:-1px;left:-1px;border-width:0 0 3px 3px;border-bottom-left-radius:6px;}
+  .corner.br{bottom:-1px;right:-1px;border-width:0 3px 3px 0;border-bottom-right-radius:6px;}
+
+  .player-box{
+    background:#000;
+    width:100%;
+    aspect-ratio:16/9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border-radius:3px;
+    overflow:hidden;
+  }
+  video, .player-box iframe{width:100%; height:100%; border:none; display:block;}
+  .player-placeholder{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:13.5px;
+    padding:20px;
+    max-width:340px;
+  }
+  .player-placeholder .big{
+    font-family:var(--font-display);
+    font-size:15px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--text);
+    display:block;
+    margin-bottom:6px;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-family:var(--font-display);
+    font-size:12.5px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:11px 20px;
+    border-radius:30px;
+    border:1px solid var(--border);
+    cursor:pointer;
+    background:var(--glass);
+    color:var(--text);
+    transition:all 0.15s ease;
+    width:100%;
+    margin-top:14px;
+  }
+  .btn:hover{background:var(--glass-hover); border-color:var(--purple); color:var(--text);}
+  .btn:focus-visible{outline:2px solid var(--purple); outline-offset:2px;}
+  .btn .arrow{transition:transform 0.2s ease;}
+  .match-card:hover .btn .arrow{transform:translateX(4px);}
+
+  .fixtures-wrap{
+    max-width:1180px;
+    margin:44px auto 60px;
+    padding:0 28px;
+  }
+  .section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:12px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .section-head h2{
+    font-family:var(--font-display);
+    font-size:20px;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    margin:0;
+  }
+  .section-head .count{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--text-muted);
+  }
+
+  .filter-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  .filter-chip{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.04em;
+    padding:7px 14px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--glass);
+    color:var(--text-muted);
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .filter-chip:hover{background:var(--glass-hover); color:var(--text);}
+  .filter-chip.active{
+    background:linear-gradient(135deg, var(--purple), #B48CFF);
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 6px 18px -6px rgba(124,92,252,0.6);
+  }
+
+  .match-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(270px, 1fr));
+    gap:14px;
+  }
+  .match-card{
+    background:var(--glass);
+    border:1px solid var(--border);
+    border-left:3px solid var(--card-color, var(--gold));
+    border-radius:6px;
+    padding:16px 16px 14px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+    position:relative;
+  }
+  .match-card:hover{
+    border-color:rgba(244,244,238,0.22);
+    border-left-color:var(--card-color, var(--gold));
+    transform:translateY(-2px);
+    background:var(--glass-hover);
+  }
+  .match-card:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .match-card.active{
+    background:rgba(124,92,252,0.08);
+    border-color:var(--purple-dim);
+    border-left-color:var(--card-color, var(--purple));
+  }
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .card-league{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  .status-chip{
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:20px;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+  }
+  .status-chip.live{color:var(--live); background:rgba(217,51,63,0.12); border:1px solid rgba(217,51,63,0.35);}
+  .status-chip.upcoming{color:var(--gold); background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.3);}
+  .status-chip.ended{color:var(--text-faint); background:transparent; border:1px solid var(--border);}
+  .status-chip .dot-live{width:6px;height:6px;}
+  .status-chip.upcoming .dot-live, .status-chip.ended .dot-live{background:currentColor; animation:none; box-shadow:none;}
+
+  .card-teams{
+    font-family:var(--font-display);
+    font-size:17px;
+    text-transform:uppercase;
+    line-height:1.3;
+    letter-spacing:0.2px;
+  }
+  .card-teams .vs{
+    color:var(--text-faint);
+    font-size:12px;
+    font-family:var(--font-mono);
+    margin:0 6px;
+    text-transform:none;
+  }
+  .card-time{
+    margin-top:10px;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--text-muted);
+  }
+
+  .empty-state{
+    font-family:var(--font-mono);
+    color:var(--text-muted);
+    font-size:13px;
+    padding:30px 0;
+  }
+
+  footer{
+    text-align:center;
+    padding:26px 24px 40px;
+    color:var(--text-faint);
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    border-top:1px solid var(--border);
+  }
+  footer .gold{color:var(--gold);}
+
+  @media (max-width:520px){
+    header{padding:20px 18px 8px;}
+    .hero-wrap, .fixtures-wrap{padding:0 18px;}
+  }
+
+  /* ---------- Soft SVG glow di semua tombol ---------- */
+  .btn, .filter-chip, .back-link{
+    position:relative;
+    isolation:isolate;
+  }
+  .btn::before, .filter-chip::before, .back-link::before{
+    content:"";
+    position:absolute;
+    inset:-16px;
+    z-index:-1;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='140'%3E%3Cdefs%3E%3Cfilter id='b' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeGaussianBlur stdDeviation='18'/%3E%3C/filter%3E%3C/defs%3E%3Cellipse cx='110' cy='70' rx='95' ry='46' fill='%237C5CFC' filter='url(%23b)'/%3E%3C/svg%3E") center/contain no-repeat;
+    opacity:0;
+    transform:scale(0.75);
+    transition:opacity 0.35s ease, transform 0.35s ease;
+    pointer-events:none;
+  }
+  .btn:hover::before, .filter-chip:hover::before, .back-link:hover::before{
+    opacity:0.7;
+    transform:scale(1.05);
+  }
+  .filter-chip.active::before{
+    opacity:0.45;
+    transform:scale(1);
+  }
+  .match-card{position:relative; isolation:isolate;}
+  .match-card::after{
+    content:"";
+    position:absolute;
+    inset:-16px;
+    z-index:-1;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='160'%3E%3Cdefs%3E%3Cfilter id='c' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeGaussianBlur stdDeviation='20'/%3E%3C/filter%3E%3C/defs%3E%3Cellipse cx='130' cy='80' rx='110' ry='52' fill='%237C5CFC' filter='url(%23c)'/%3E%3C/svg%3E") center/contain no-repeat;
+    opacity:0;
+    transform:scale(0.8);
+    transition:opacity 0.35s ease, transform 0.35s ease;
+    pointer-events:none;
+  }
+  .match-card:hover::after{opacity:0.35; transform:scale(1);}
+</style>
+</head>
+<body>
+
+  <div class="ticker-bar">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+
+  <header>
+    <div class="logo"><span class="ball"></span>KICKOFF</div>
+    <a class="back-link" href="index.html">← Pilih Klub Lain</a>
+  </header>
+
+  <div class="hero-wrap">
+    <div class="hero-meta">
+      <span class="live-badge is-upcoming" id="live-badge">
+        <span class="dot-live"></span>Pilih Pertandingan
+      </span>
+    </div>
+    <div id="match-league"></div>
+    <h1 id="match-title">Pilih pertandingan untuk mulai menonton</h1>
+    <p id="match-time">Daftar pertandingan tersedia di bawah</p>
+
+    <div class="player-frame">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="player-box" id="player-container">
+        <div class="player-placeholder">
+          <span class="big">Belum ada tayangan dipilih</span>
+          Klik salah satu kartu pertandingan di bawah untuk memutar stream.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixtures-wrap">
+    <div class="section-head">
+      <h2 id="fixtures-title">Jadwal Pertandingan</h2>
+      <span class="count" id="match-count"></span>
+    </div>
+    <div class="filter-row" id="filter-row">
+      <span class="filter-chip active" data-filter="all">Semua</span>
+      <span class="filter-chip" data-filter="live">Live</span>
+      <span class="filter-chip" data-filter="upcoming">Akan Datang</span>
+      <span class="filter-chip" data-filter="ended">Selesai</span>
+    </div>
+    <div class="match-list" id="match-list"></div>
+  </div>
+
+  <footer>
+    KICKOFF — semua waktu ditampilkan dalam <span class="gold">WIB</span>. Data pertandingan bersifat contoh.
+  </footer>
+
+  <script>
+    const API_URL = '/api';
+    const params = new URLSearchParams(window.location.search);
+    const clubFilter = params.get('club');
+    const preselectId = params.get('id');
+    const channelParam = params.get('channel');
+
+    let activeCard = null;
+    let allMatches = [];
+    let currentFilter = 'all';
+
+    const statusLabel = { live: 'Live', upcoming: 'Akan Datang', ended: 'Selesai' };
+
+    if (clubFilter) {
+      document.getElementById('fixtures-title').textContent = `Jadwal ${clubFilter}`;
+    }
+
+    async function playChannelLive(handle) {
+      try {
+        const response = await fetch(`${API_URL}/youtube-live`);
+        if (!response.ok) throw new Error('Gagal memuat status live');
+        const channels = await response.json();
+        const ch = channels.find(c => c.handle.toLowerCase() === handle.toLowerCase());
+        if (!ch) throw new Error('Channel tidak ditemukan');
+
+        document.getElementById('match-league').innerText = 'Partner Streaming';
+        document.getElementById('match-title').innerText = ch.title || ch.name;
+        document.getElementById('match-time').innerText = ch.isLive
+          ? 'Sedang tayang langsung sekarang'
+          : `${ch.name} sedang tidak live. Coba cek lagi nanti.`;
+
+        const badge = document.getElementById('live-badge');
+        badge.className = 'live-badge' + (ch.isLive ? '' : ' is-upcoming');
+        badge.innerHTML = `<span class="dot-live"></span>${ch.isLive ? 'SIARAN LANGSUNG' : 'OFFLINE'}`;
+
+        const container = document.getElementById('player-container');
+        if (ch.isLive && ch.videoId) {
+          container.innerHTML = '';
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube.com/embed/${ch.videoId}?autoplay=1`;
+          iframe.allowFullscreen = true;
+          iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+          container.appendChild(iframe);
+        } else {
+          container.innerHTML = `<div class="player-placeholder"><span class="big">${ch.name} sedang offline</span>Belum ada siaran langsung saat ini. Coba cek lagi menjelang jam kick-off.</div>`;
+        }
+
+        document.querySelector('.hero-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        console.error('Gagal memuat channel live:', err);
+        document.getElementById('player-container').innerHTML =
+          '<div class="player-placeholder"><span class="big">Gagal memuat channel</span>Pastikan YOUTUBE_API_KEY sudah diset di server.</div>';
+      }
+    }
+
+    async function loadMatches() {
+      const tickerTrack = document.getElementById('ticker-track');
+      try {
+        const response = await fetch(`${API_URL}/matches`);
+        if (!response.ok) throw new Error('Gagal memuat data');
+        let matches = await response.json();
+
+        if (clubFilter) {
+          matches = matches.filter(m => m.home === clubFilter || m.away === clubFilter);
+        }
+        allMatches = matches;
+
+        renderMatches();
+
+        const liveOnes = allMatches.filter(m => m.status === 'live');
+        const tickerSource = liveOnes.length ? liveOnes : allMatches;
+        const tickerItems = tickerSource.map(m =>
+          `<span class="ticker-item"><span class="dot-live"></span><b>${m.home || m.title}${m.away ? ' vs ' + m.away : ''}</b>&nbsp;— ${m.time}</span>`
+        ).join('');
+        tickerTrack.innerHTML = tickerItems + tickerItems || '<span class="ticker-item">Tidak ada jadwal</span>';
+
+        if (preselectId) {
+          const card = document.querySelector(`.match-card[data-id="${preselectId}"]`);
+          if (card) playStream(preselectId, card);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil daftar pertandingan:", err);
+        document.getElementById('match-list').innerHTML = '<div class="empty-state">Tidak dapat terhubung ke server. Pastikan server.js sedang berjalan di ' + API_URL + '.</div>';
+        tickerTrack.innerHTML = '<span class="ticker-item">Server tidak terhubung</span>';
+      }
+    }
+
+    function renderMatches() {
+      const listContainer = document.getElementById('match-list');
+      const filtered = currentFilter === 'all' ? allMatches : allMatches.filter(m => (m.status || 'upcoming') === currentFilter);
+
+      document.getElementById('match-count').textContent = `${filtered.length} PERTANDINGAN`;
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = '<div class="empty-state">Tidak ada pertandingan pada kategori ini.</div>';
+        return;
+      }
+
+      listContainer.innerHTML = '';
+      filtered.forEach(match => {
+        const status = match.status || 'upcoming';
+        const card = document.createElement('div');
+        card.className = 'match-card';
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.dataset.id = match.id;
+        if (match.homeColor) card.style.setProperty('--card-color', match.homeColor);
+        card.innerHTML = `
+          <div class="card-top">
+            <span class="card-league">${match.league || 'Pertandingan'}</span>
+            <span class="status-chip ${status}"><span class="dot-live"></span>${statusLabel[status] || status}</span>
+          </div>
+          <div class="card-teams">${match.home || match.title}${match.away ? `<span class="vs">vs</span>${match.away}` : ''}</div>
+          <div class="card-time">${match.time}</div>
+          <button class="btn" type="button">Tonton Sekarang <span class="arrow">→</span></button>
+        `;
+        const trigger = () => playStream(match.id, card);
+        card.onclick = trigger;
+        card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger(); } };
+        card.querySelector('.btn').onclick = (e) => { e.stopPropagation(); trigger(); };
+        listContainer.appendChild(card);
+      });
+    }
+
+    document.getElementById('filter-row').addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = chip.dataset.filter;
+      renderMatches();
+    });
+
+    async function playStream(id, cardEl) {
+      try {
+        const response = await fetch(`${API_URL}/stream/${id}`);
+        if (!response.ok) throw new Error('Stream tidak ditemukan');
+        const data = await response.json();
+
+        if (activeCard) activeCard.classList.remove('active');
+        if (cardEl) { cardEl.classList.add('active'); activeCard = cardEl; }
+
+        document.getElementById('match-title').innerText = data.title || `${data.home} vs ${data.away}`;
+        document.getElementById('match-time').innerText = data.time;
+        document.getElementById('match-league').innerText = data.league || '';
+
+        const badge = document.getElementById('live-badge');
+        const isLive = data.status === 'live';
+        badge.className = 'live-badge' + (isLive ? '' : ' is-upcoming');
+        badge.innerHTML = `<span class="dot-live"></span>${isLive ? 'SIARAN LANGSUNG' : (statusLabel[data.status] || 'TAYANGAN').toUpperCase()}`;
+
+        const container = document.getElementById('player-container');
+        container.innerHTML = '';
+
+        if (data.streamType === 'm3u8') {
+          const video = document.createElement('video');
+          video.controls = true;
+          video.autoplay = true;
+          container.appendChild(video);
+
+          if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(data.streamUrl);
+            hls.attachMedia(video);
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = data.streamUrl;
+          } else {
+            container.innerHTML = '<div class="player-placeholder"><span class="big">Browser tidak mendukung</span>Perangkat ini tidak mendukung pemutaran HLS.</div>';
+          }
+        } else if (data.streamType === 'iframe') {
+          const iframe = document.createElement('iframe');
+          iframe.src = data.streamUrl;
+          iframe.allowFullscreen = true;
+          iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+          container.appendChild(iframe);
+        }
+
+        document.querySelector('.hero-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        console.error("Gagal memuat stream:", err);
+        document.getElementById('player-container').innerHTML =
+          '<div class="player-placeholder"><span class="big">Gagal memuat tayangan</span>Silakan coba lagi atau pilih pertandingan lain.</div>';
+      }
+    }
+
+    loadMatches();
+    if (channelParam) playChannelLive(channelParam);
+  </script>
+
+</body>
+</html>

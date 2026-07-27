@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KICKOFF — Live Score, Jadwal & Hasil Pertandingan</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0714;
+    --bg-elev:#140F22;
+    --panel:#171025;
+    --panel-2:#1C1430;
+    --border:rgba(255,255,255,0.08);
+    --purple:#7C5CFC;
+    --purple-dim:#4B3A8F;
+    --live:#F0384A;
+    --gold:#F5B942;
+    --text:#F2F0F7;
+    --text-muted:#9791AE;
+    --text-faint:#645C7C;
+    --font-display:'Poppins', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 480px at 50% -12%, rgba(124,92,252,0.16), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:var(--purple); color:#fff;}
+  ::-webkit-scrollbar{height:6px; width:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--purple-dim); border-radius:6px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    max-width:1180px;
+    margin:0 auto;
+    padding:20px 24px;
+  }
+  .logo{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:19px;
+    letter-spacing:0.01em;
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  .logo .mark{
+    width:30px; height:30px;
+    border-radius:9px;
+    background:linear-gradient(135deg, var(--purple), #B48CFF);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px;
+  }
+  .logo .accent{color:var(--purple);}
+  nav.top-nav{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-muted);
+    letter-spacing:0.06em;
+    display:flex;
+    gap:18px;
+  }
+  nav.top-nav a:hover{color:var(--text);}
+
+  /* ---------- Hero Banner ---------- */
+  .hero-banner-wrap{
+    max-width:1180px;
+    margin:14px auto 0;
+    padding:0 24px;
+  }
+  .hero-banner{
+    position:relative;
+    overflow:hidden;
+    border-radius:20px;
+    border:1px solid var(--border);
+    padding:38px 40px;
+    background:
+      radial-gradient(650px 260px at 12% 20%, rgba(124,92,252,0.35), transparent 60%),
+      radial-gradient(500px 220px at 88% 90%, rgba(245,185,66,0.16), transparent 60%),
+      linear-gradient(120deg, #1B1330, #241C42 55%, #1B1330);
+  }
+  .hero-banner .hb-blob{
+    position:absolute;
+    pointer-events:none;
+    opacity:0.9;
+  }
+  .hero-banner .hb-blob.b1{top:-60px; right:-40px; width:260px; animation:floatBlob 7s ease-in-out infinite;}
+  .hero-banner .hb-blob.b2{bottom:-70px; left:20%; width:200px; animation:floatBlob 9s ease-in-out infinite reverse;}
+  @keyframes floatBlob{
+    0%,100%{transform:translateY(0) scale(1);}
+    50%{transform:translateY(-14px) scale(1.05);}
+  }
+  .hero-banner .hb-ball{
+    position:absolute;
+    top:18px;
+    right:48px;
+    width:54px;
+    height:54px;
+    animation:ballFloat 4s ease-in-out infinite;
+  }
+  @keyframes ballFloat{
+    0%,100%{transform:translateY(0) rotate(0deg);}
+    50%{transform:translateY(-10px) rotate(18deg);}
+  }
+  .hero-banner .hb-content{
+    position:relative;
+    z-index:1;
+    max-width:640px;
+  }
+  .hero-banner .hb-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    background:rgba(245,185,66,0.1);
+    border:1px solid rgba(245,185,66,0.3);
+    padding:5px 12px;
+    border-radius:20px;
+    margin-bottom:16px;
+  }
+  .hero-banner h1{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:clamp(22px, 3.6vw, 32px);
+    line-height:1.15;
+    margin:0 0 10px;
+  }
+  .hero-banner h1 .accent{
+    background:linear-gradient(120deg, var(--purple), #B48CFF);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .hero-banner p{
+    font-size:14px;
+    color:var(--text-muted);
+    margin:0 0 22px;
+    max-width:480px;
+  }
+  .hero-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .btn-hero-primary{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13.5px;
+    color:#fff;
+    background:linear-gradient(135deg, var(--purple), #B48CFF);
+    padding:13px 22px;
+    border-radius:11px;
+    box-shadow:0 10px 26px -8px rgba(124,92,252,0.55);
+    transition:transform 0.15s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .btn-hero-primary:hover{transform:translateY(-2px);}
+  .btn-hero-secondary{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--text);
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--border);
+    padding:13px 22px;
+    border-radius:11px;
+    transition:all 0.15s ease;
+  }
+  .btn-hero-secondary:hover{border-color:var(--purple-dim); background:rgba(255,255,255,0.1);}
+  @media (max-width:640px){
+    .hero-banner{padding:28px 22px;}
+    .hero-banner .hb-ball{display:none;}
+  }
+
+  /* ---------- Partner Streaming ---------- */
+  .partner-wrap{
+    max-width:1180px;
+    margin:22px auto 0;
+    padding:0 24px;
+  }
+  .partner-wrap h2{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:16px;
+    margin:0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .partner-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    gap:14px;
+  }
+  .partner-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 18px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.15s ease;
+  }
+  .partner-card:hover{border-color:var(--purple-dim); transform:translateY(-2px);}
+  .partner-card .p-avatar{
+    width:44px; height:44px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--purple), #B48CFF);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:700; font-size:15px;
+    flex-shrink:0;
+  }
+  .partner-card .p-info{flex:1; min-width:0;}
+  .partner-card .p-name{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:4px;
+  }
+  .partner-card .p-status{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.05em;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:var(--text-faint);
+  }
+  .partner-card .p-status.live{color:var(--live);}
+  .partner-card .p-status .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:currentColor;
+  }
+  .partner-card .p-status.live .dot{
+    box-shadow:0 0 0 0 rgba(240,56,74,0.55);
+    animation:pulseDot 1.6s ease-out infinite;
+  }
+  .partner-card .p-badge{
+    font-family:var(--font-mono);
+    font-size:10px;
+    padding:5px 10px;
+    border-radius:20px;
+    white-space:nowrap;
+    background:var(--purple);
+    color:#fff;
+  }
+  .partner-card .p-badge.offline{background:var(--panel-2); color:var(--text-faint);}
+
+  /* ---------- Date strip ---------- */
+  .date-strip-wrap{
+    max-width:1180px;
+    margin:6px auto 0;
+    padding:0 24px;
+  }
+  .date-strip{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding:6px 2px 14px;
+  }
+  .date-pill{
+    flex-shrink:0;
+    width:58px;
+    padding:10px 0 8px;
+    text-align:center;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .date-pill:hover{border-color:var(--purple-dim);}
+  .date-pill.active{
+    background:linear-gradient(160deg, var(--purple), #5B3FD9);
+    border-color:transparent;
+    box-shadow:0 6px 18px -6px rgba(124,92,252,0.6);
+  }
+  .date-pill .dow{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    letter-spacing:0.06em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+  }
+  .date-pill.active .dow{color:rgba(255,255,255,0.75);}
+  .date-pill .dom{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:16px;
+    margin-top:3px;
+  }
+
+  /* ---------- Highlight card ---------- */
+  .highlight-wrap{
+    max-width:1180px;
+    margin:4px auto 0;
+    padding:0 24px;
+  }
+  .highlight-card{
+    display:inline-flex;
+    align-items:center;
+    gap:22px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 22px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.15s ease;
+  }
+  .highlight-card:hover{border-color:var(--purple-dim); transform:translateY(-2px);}
+  .hl-team{display:flex; flex-direction:column; align-items:center; gap:8px; width:80px;}
+  .hl-crest{
+    width:40px; height:40px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:700; font-size:13px;
+    color:#0B0714;
+  }
+  .hl-team span{font-size:11.5px; color:var(--text-muted); text-align:center;}
+  .hl-mid{text-align:center;}
+  .hl-status{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin-bottom:5px;
+  }
+  .hl-status.live{color:var(--live);}
+  .hl-score{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:20px;
+    letter-spacing:0.05em;
+  }
+  .hl-league{
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--text-faint);
+    margin-top:5px;
+  }
+
+  /* ---------- CTA banner (non-gambling) ---------- */
+  .cta-banner{
+    max-width:1180px;
+    margin:20px auto 0;
+    padding:0 24px;
+  }
+  .cta-inner{
+    background:linear-gradient(100deg, #241B3E, #2E2050 60%, #241B3E);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .cta-inner .txt .eyebrow{
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:4px;
+  }
+  .cta-inner .txt h3{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:16px;
+    margin:0;
+  }
+  .cta-inner .txt p{
+    margin:4px 0 0;
+    font-size:12.5px;
+    color:var(--text-muted);
+  }
+  .btn-cta{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13px;
+    color:#fff;
+    background:linear-gradient(135deg, var(--purple), #B48CFF);
+    padding:11px 20px;
+    border-radius:10px;
+    white-space:nowrap;
+    transition:transform 0.15s ease;
+  }
+  .btn-cta:hover{transform:translateY(-2px);}
+
+  /* ---------- Section ---------- */
+  .scores-wrap{
+    max-width:1180px;
+    margin:34px auto 60px;
+    padding:0 24px;
+  }
+  .scores-wrap h2{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 16px;
+  }
+
+  .filter-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .filter-tab{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:12.5px;
+    padding:8px 14px;
+    border-radius:9px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text-muted);
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .filter-tab:hover{color:var(--text);}
+  .filter-tab.active{
+    background:var(--purple);
+    border-color:var(--purple);
+    color:#fff;
+  }
+  .filter-tab .badge{
+    background:rgba(255,255,255,0.18);
+    font-size:10px;
+    padding:1px 6px;
+    border-radius:20px;
+  }
+  .filter-tab.live-tab{color:var(--live);}
+  .filter-tab.live-tab .dot-live{width:6px;height:6px;border-radius:50%;background:var(--live); box-shadow:0 0 0 0 rgba(240,56,74,0.55); animation:pulseDot 1.6s ease-out infinite;}
+  @keyframes pulseDot{
+    0%{box-shadow:0 0 0 0 rgba(240,56,74,0.55);}
+    70%{box-shadow:0 0 0 6px rgba(240,56,74,0);}
+    100%{box-shadow:0 0 0 0 rgba(240,56,74,0);}
+  }
+
+  .search-settings{
+    display:flex;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .search-box{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 14px;
+  }
+  .search-box input{
+    background:none; border:none; outline:none;
+    color:var(--text); font-size:13px; width:100%;
+    font-family:var(--font-body);
+  }
+  .search-box input::placeholder{color:var(--text-faint);}
+  .search-box svg{opacity:0.55; flex-shrink:0;}
+  .settings-btn{
+    display:flex; align-items:center; gap:7px;
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:10px 16px;
+    font-size:12.5px; color:var(--text-muted);
+    cursor:default;
+  }
+
+  .league-group{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .league-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 18px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .league-head .swatch{
+    width:20px; height:20px; border-radius:5px; flex-shrink:0;
+  }
+  .league-head .name{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13.5px;
+    flex:1;
+  }
+  .league-head .meta{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--text-faint);
+  }
+  .league-head .chev{
+    transition:transform 0.2s ease;
+    color:var(--text-faint);
+  }
+  .league-group.collapsed .chev{transform:rotate(-90deg);}
+  .league-group.collapsed .match-table{display:none;}
+
+  .match-table{width:100%; border-collapse:collapse;}
+  .match-table thead th{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    text-align:left;
+    padding:8px 18px;
+    border-top:1px solid var(--border);
+    font-weight:400;
+  }
+  .match-table thead th.center, .match-table td.center{text-align:center;}
+  .match-table tbody tr{
+    cursor:pointer;
+    transition:background 0.12s ease;
+  }
+  .match-table tbody tr:hover{background:var(--panel-2);}
+  .match-table td{
+    padding:12px 18px;
+    border-top:1px solid var(--border);
+    font-size:13px;
+    vertical-align:middle;
+  }
+  .cell-time{font-family:var(--font-mono); color:var(--text-muted); font-size:11.5px;}
+  .cell-time .live-tag{
+    display:block;
+    color:var(--live);
+    font-weight:600;
+    font-size:10px;
+    letter-spacing:0.05em;
+  }
+  .cell-team{display:flex; align-items:center; gap:9px;}
+  .cell-team.away{justify-content:flex-end; flex-direction:row-reverse;}
+  .crest-dot{
+    width:20px; height:20px; border-radius:50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; color:#0B0714;
+  }
+  .cell-team span{font-size:12.5px;}
+  .cell-score{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    text-align:center;
+    white-space:nowrap;
+  }
+  .cell-score .dash{color:var(--text-faint); font-weight:400;}
+  .cell-ht{font-family:var(--font-mono); color:var(--text-faint); font-size:11px;}
+  .cell-corner{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-muted);
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+  }
+
+  .empty-state{
+    font-family:var(--font-mono);
+    color:var(--text-muted);
+    font-size:12.5px;
+    padding:30px 18px;
+  }
+
+  footer{
+    text-align:center;
+    padding:26px 24px 44px;
+    color:var(--text-faint);
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.05em;
+  }
+  footer .purple{color:var(--purple);}
+
+  @media (max-width:640px){
+    .match-table thead th.corner-col, .match-table td.corner-col{display:none;}
+  }
+  @media (max-width:520px){
+    header, .date-strip-wrap, .highlight-wrap, .cta-banner, .scores-wrap{padding-left:16px; padding-right:16px;}
+    .cell-team span{font-size:11.5px;}
+  }
+
+  /* ---------- Soft SVG glow di semua tombol ---------- */
+  .btn-cta, .filter-tab, .date-pill, .settings-btn, .highlight-card, .btn-hero-primary, .btn-hero-secondary, .partner-card{
+    position:relative;
+    isolation:isolate;
+  }
+  .btn-cta::before, .filter-tab::before, .date-pill::before, .settings-btn::before, .highlight-card::before, .btn-hero-primary::before, .btn-hero-secondary::before, .partner-card::before{
+    content:"";
+    position:absolute;
+    inset:-16px;
+    z-index:-1;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='140'%3E%3Cdefs%3E%3Cfilter id='b' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeGaussianBlur stdDeviation='18'/%3E%3C/filter%3E%3C/defs%3E%3Cellipse cx='110' cy='70' rx='95' ry='46' fill='%237C5CFC' filter='url(%23b)'/%3E%3C/svg%3E") center/contain no-repeat;
+    opacity:0;
+    transform:scale(0.75);
+    transition:opacity 0.35s ease, transform 0.35s ease;
+    pointer-events:none;
+  }
+  .btn-cta:hover::before, .filter-tab:hover::before, .date-pill:hover::before, .settings-btn:hover::before, .highlight-card:hover::before, .btn-hero-primary:hover::before, .btn-hero-secondary:hover::before, .partner-card:hover::before{
+    opacity:0.7;
+    transform:scale(1.05);
+  }
+  .filter-tab.active::before, .date-pill.active::before{
+    opacity:0.45;
+    transform:scale(1);
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><span class="mark">⚽</span>KICK<span class="accent">OFF</span></div>
+    <nav class="top-nav">
+      <a href="streaming.html">SIARAN LANGSUNG</a>
+      <a href="#scores">SKOR</a>
+    </nav>
+  </header>
+
+  <div class="hero-banner-wrap">
+    <div class="hero-banner">
+      <svg class="hb-blob b1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="hbBlur1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="22"/></filter></defs>
+        <circle cx="100" cy="100" r="90" fill="#7C5CFC" filter="url(#hbBlur1)" opacity="0.4"/>
+      </svg>
+      <svg class="hb-blob b2" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="hbBlur2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="22"/></filter></defs>
+        <circle cx="100" cy="100" r="90" fill="#F5B942" filter="url(#hbBlur2)" opacity="0.25"/>
+      </svg>
+      <svg class="hb-ball" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="30" fill="#F2F0F7" stroke="#645C7C" stroke-width="1.5"/>
+        <path d="M32 14 L44 23 L39 38 L25 38 L20 23 Z" fill="#171025"/>
+        <path d="M32 14 L20 23 M32 14 L44 23 M25 38 L14 46 M39 38 L50 46 M25 38 L20 23 M39 38 L44 23" stroke="#171025" stroke-width="1.5" fill="none"/>
+      </svg>
+      <div class="hb-content">
+        <div class="hb-eyebrow">⚽ Musim Baru Dimulai</div>
+        <h1>Nonton <span class="accent">Live Streaming</span> &amp; Pantau Skor Real-Time di Satu Tempat</h1>
+        <p>Jangan lewatkan momen seru dari liga favoritmu — skor update tiap detik, jadwal lengkap, dan siaran langsung gratis tanpa ribet.</p>
+        <div class="hero-actions">
+          <a class="btn-hero-primary" href="streaming.html">▶ Tonton Live Sekarang</a>
+          <a class="btn-hero-secondary" href="#scores">Lihat Semua Skor</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="date-strip-wrap">
+    <div class="date-strip" id="date-strip"></div>
+  </div>
+
+  <div class="highlight-wrap">
+    <div class="highlight-card" id="highlight-card">
+      <!-- diisi JS -->
+    </div>
+  </div>
+
+  <div class="cta-banner">
+    <div class="cta-inner">
+      <div class="txt">
+        <div class="eyebrow">Siaran Langsung</div>
+        <h3>Nonton pertandingan live streaming gratis</h3>
+        <p>Pilih klub favoritmu dan langsung tonton siarannya.</p>
+      </div>
+      <a class="btn-cta" href="streaming.html">Tonton Sekarang →</a>
+    </div>
+  </div>
+
+  <div class="partner-wrap">
+    <h2>📡 Partner Streaming Resmi</h2>
+    <div class="partner-grid" id="partner-grid">
+      <!-- diisi JS -->
+    </div>
+  </div>
+
+  <div class="scores-wrap" id="scores">
+    <h2>Live Football Scores, Fixtures &amp; Results</h2>
+
+    <div class="filter-bar" id="filter-bar">
+      <span class="filter-tab active" data-filter="all">Semua</span>
+      <span class="filter-tab" data-filter="live">🔥 Hot</span>
+      <span class="filter-tab live-tab" data-filter="live-only"><span class="dot-live"></span>Live <span class="badge" id="live-count">0</span></span>
+      <span class="filter-tab" data-filter="upcoming">Akan Datang</span>
+      <span class="filter-tab" data-filter="ended">Selesai</span>
+    </div>
+
+    <div class="search-settings">
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Cari tim atau liga…">
+      </div>
+      <div class="settings-btn">⚙ Pengaturan</div>
+    </div>
+
+    <div id="league-groups"></div>
+  </div>
+
+  <footer>
+    KICKOFF — semua waktu ditampilkan dalam <span class="purple">WIB</span>. Data pertandingan bersifat contoh.
+  </footer>
+
+  <script>
+    const API_URL = '/api';
+    let allMatches = [];
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    const dayNames = ['MIN','SEN','SEL','RAB','KAM','JUM','SAB'];
+
+    function buildDateStrip() {
+      const strip = document.getElementById('date-strip');
+      const today = new Date();
+      strip.innerHTML = '';
+      for (let i = -1; i <= 6; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const pill = document.createElement('div');
+        pill.className = 'date-pill' + (i === 0 ? ' active' : '');
+        pill.innerHTML = `<div class="dow">${dayNames[d.getDay()]}</div><div class="dom">${d.getDate()}</div>`;
+        pill.onclick = () => {
+          document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+        };
+        strip.appendChild(pill);
+      }
+    }
+
+    function initials(name){
+      return (name || '?').split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
+    }
+
+    async function loadPartners() {
+      const grid = document.getElementById('partner-grid');
+      try {
+        const response = await fetch(`${API_URL}/youtube-live`);
+        if (!response.ok) throw new Error('Gagal memuat status partner');
+        const channels = await response.json();
+
+        grid.innerHTML = '';
+        channels.forEach(ch => {
+          const card = document.createElement('div');
+          card.className = 'partner-card';
+          card.innerHTML = `
+            <div class="p-avatar">${initials(ch.name)}</div>
+            <div class="p-info">
+              <div class="p-name">${ch.name}</div>
+              <div class="p-status ${ch.isLive ? 'live' : ''}"><span class="dot"></span>${ch.isLive ? 'SEDANG LIVE' : 'Offline'}</div>
+            </div>
+            <span class="p-badge ${ch.isLive ? '' : 'offline'}">${ch.isLive ? 'Tonton →' : 'Cek'}</span>
+          `;
+          card.onclick = () => window.location.href = `streaming.html?channel=${ch.handle}`;
+          grid.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Gagal mengambil status partner:', err);
+        grid.innerHTML = '<div class="empty-state">Status partner tidak tersedia. Pastikan YOUTUBE_API_KEY sudah diset di server.</div>';
+      }
+    }
+
+    async function loadMatches() {
+      const groupsEl = document.getElementById('league-groups');
+      try {
+        const response = await fetch(`${API_URL}/matches`);
+        if (!response.ok) throw new Error('Gagal memuat data');
+        allMatches = await response.json();
+
+        renderHighlight();
+        renderGroups();
+      } catch (err) {
+        console.error('Gagal mengambil daftar pertandingan:', err);
+        groupsEl.innerHTML = '<div class="empty-state">Tidak dapat terhubung ke server. Pastikan server.js sedang berjalan di ' + API_URL + '.</div>';
+      }
+    }
+
+    function renderHighlight() {
+      const card = document.getElementById('highlight-card');
+      const featured = allMatches.find(m => m.status === 'live') || allMatches[0];
+      if (!featured) { card.style.display = 'none'; return; }
+
+      const scoreTxt = featured.status === 'upcoming'
+        ? '- : -'
+        : `${featured.homeScore ?? 0} : ${featured.awayScore ?? 0}`;
+      const statusTxt = featured.status === 'live' ? 'LIVE' : (featured.status === 'ended' ? 'FULLTIME' : featured.time);
+
+      card.innerHTML = `
+        <div class="hl-team">
+          <div class="hl-crest" style="background:${featured.homeColor || '#7C5CFC'}">${initials(featured.home)}</div>
+          <span>${featured.home}</span>
+        </div>
+        <div class="hl-mid">
+          <div class="hl-status ${featured.status === 'live' ? 'live' : ''}">${statusTxt}</div>
+          <div class="hl-score">${scoreTxt}</div>
+          <div class="hl-league">${featured.league}</div>
+        </div>
+        <div class="hl-team">
+          <div class="hl-crest" style="background:${featured.awayColor || '#B48CFF'}">${initials(featured.away)}</div>
+          <span>${featured.away}</span>
+        </div>
+      `;
+      card.onclick = () => window.location.href = `streaming.html?id=${featured.id}`;
+    }
+
+    function renderGroups() {
+      const groupsEl = document.getElementById('league-groups');
+
+      let filtered = allMatches;
+      if (currentFilter === 'live') filtered = filtered.filter(m => m.status === 'live');
+      if (currentFilter === 'live-only') filtered = filtered.filter(m => m.status === 'live');
+      if (currentFilter === 'upcoming') filtered = filtered.filter(m => m.status === 'upcoming');
+      if (currentFilter === 'ended') filtered = filtered.filter(m => m.status === 'ended');
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(m =>
+          (m.home || '').toLowerCase().includes(q) ||
+          (m.away || '').toLowerCase().includes(q) ||
+          (m.league || '').toLowerCase().includes(q)
+        );
+      }
+
+      document.getElementById('live-count').textContent = allMatches.filter(m => m.status === 'live').length;
+
+      if (filtered.length === 0) {
+        groupsEl.innerHTML = '<div class="empty-state">Tidak ada pertandingan yang cocok.</div>';
+        return;
+      }
+
+      const byLeague = new Map();
+      filtered.forEach(m => {
+        const key = m.league || 'Lainnya';
+        if (!byLeague.has(key)) byLeague.set(key, []);
+        byLeague.get(key).push(m);
+      });
+
+      groupsEl.innerHTML = '';
+      byLeague.forEach((matches, league) => {
+        const group = document.createElement('div');
+        group.className = 'league-group';
+        const rows = matches.map(m => {
+          const scoreCell = m.status === 'upcoming'
+            ? `<span class="dash">-</span>`
+            : `${m.homeScore ?? 0} <span class="dash">-</span> ${m.awayScore ?? 0}`;
+          const timeCell = m.status === 'live'
+            ? `<span class="live-tag">● LIVE</span>${m.time.split(' ')[1] || m.time}`
+            : m.time;
+          return `
+            <tr data-id="${m.id}">
+              <td class="cell-time">${timeCell}</td>
+              <td><div class="cell-team"><span class="crest-dot" style="background:${m.homeColor || '#7C5CFC'}">${initials(m.home)}</span><span>${m.home}</span></div></td>
+              <td class="cell-score">${scoreCell}</td>
+              <td><div class="cell-team away"><span class="crest-dot" style="background:${m.awayColor || '#B48CFF'}">${initials(m.away)}</span><span>${m.away}</span></div></td>
+              <td class="center cell-ht">${m.htScore || '-'}</td>
+              <td class="center corner-col"><span class="cell-corner">🚩 ${m.cornerHome ?? 0}:${m.cornerAway ?? 0}</span></td>
+            </tr>
+          `;
+        }).join('');
+
+        group.innerHTML = `
+          <div class="league-head">
+            <span class="swatch" style="background:linear-gradient(135deg, var(--purple), #B48CFF)"></span>
+            <span class="name">${league}</span>
+            <span class="meta">${matches.length} PERTANDINGAN</span>
+            <span class="chev">▾</span>
+          </div>
+          <table class="match-table">
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Home</th>
+                <th class="center">Skor</th>
+                <th>Away</th>
+                <th class="center">HT</th>
+                <th class="center corner-col">Corner</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+
+        group.querySelector('.league-head').onclick = () => group.classList.toggle('collapsed');
+        group.querySelectorAll('tbody tr').forEach(tr => {
+          tr.onclick = () => window.location.href = `streaming.html?id=${tr.dataset.id}`;
+        });
+
+        groupsEl.appendChild(group);
+      });
+    }
+
+    document.getElementById('filter-bar').addEventListener('click', (e) => {
+      const tab = e.target.closest('.filter-tab');
+      if (!tab) return;
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      renderGroups();
+    });
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      renderGroups();
+    });
+
+    buildDateStrip();
+    loadMatches();
+    loadPartners();
+  </script>
+
+</body>
+</html>
