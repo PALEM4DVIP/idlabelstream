@@ -1,61 +1,158 @@
 // api/_store.js
-// PENTING: file ini TIDAK mengubah _data.js sama sekali.
-// KV hanya menyimpan PERUBAHAN (override) skor/status/corner per id pertandingan.
-// Saat data diminta, override digabung (merge) di atas data statis dari _data.js.
-//
-// Kenapa begini? Supaya field seperti streamUrl, warna tim, dsb tetap
-// dikelola di _data.js seperti biasa (dan youtube-live.js / bagian lain
-// yang sudah pakai _data.js tidak perlu diubah / tidak ikut terpengaruh).
+// KV sekarang jadi SUMBER DATA UTAMA (bukan cuma override) supaya admin
+// bisa nambah pertandingan baru / edit jadwal / hapus, bukan cuma update skor.
+// Saat pertama kali diakses dan KV masih kosong, di-seed dari data awal di bawah.
 
 const { kv } = require("@vercel/kv");
-const { matches: staticMatches } = require("./_data");
 
-const KEY = "match-overrides";
+const KEY = "matches:list";
 
-// Field yang boleh diubah lewat admin panel
-const EDITABLE_FIELDS = [
-  "status",
-  "homeScore",
-  "awayScore",
-  "htScore",
-  "cornerHome",
-  "cornerAway",
-  "time"
+// Data awal — hanya dipakai SEKALI saat KV masih benar-benar kosong
+const seedMatches = [
+  {
+    id: "198",
+    league: "Copa do Brasil",
+    home: "Bragantino",
+    away: "Coritiba PR",
+    homeColor: "#E2231A",
+    awayColor: "#046A38",
+    title: "Bragantino vs Coritiba PR",
+    time: "2026-07-27 04:30 WIB",
+    status: "live",
+    homeScore: 0,
+    awayScore: 0,
+    htScore: "0-0",
+    cornerHome: 3,
+    cornerAway: 2,
+    streamType: "m3u8",
+    streamUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    thumbnail: ""
+  },
+  {
+    id: "199",
+    league: "La Liga",
+    home: "Real Madrid",
+    away: "Barcelona",
+    homeColor: "#FEBE10",
+    awayColor: "#A50044",
+    title: "Real Madrid vs Barcelona",
+    time: "2026-07-28 02:00 WIB",
+    status: "upcoming",
+    homeScore: null,
+    awayScore: null,
+    htScore: "-",
+    cornerHome: 0,
+    cornerAway: 0,
+    streamType: "iframe",
+    streamUrl: "https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID",
+    thumbnail: ""
+  },
+  {
+    id: "200",
+    league: "Premier League",
+    home: "Liverpool",
+    away: "Manchester City",
+    homeColor: "#C8102E",
+    awayColor: "#6CABDD",
+    title: "Liverpool vs Manchester City",
+    time: "2026-07-28 21:00 WIB",
+    status: "upcoming",
+    homeScore: null,
+    awayScore: null,
+    htScore: "-",
+    cornerHome: 0,
+    cornerAway: 0,
+    streamType: "iframe",
+    streamUrl: "https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID",
+    thumbnail: ""
+  },
+  {
+    id: "201",
+    league: "Serie A",
+    home: "AC Milan",
+    away: "Inter Milan",
+    homeColor: "#FB090B",
+    awayColor: "#0033A0",
+    title: "AC Milan vs Inter Milan",
+    time: "2026-07-26 23:45 WIB",
+    status: "ended",
+    homeScore: 2,
+    awayScore: 1,
+    htScore: "1-0",
+    cornerHome: 6,
+    cornerAway: 4,
+    streamType: "iframe",
+    streamUrl: "https://www.youtube.com/embed/live_stream?channel=CHANNEL_ID",
+    thumbnail: ""
+  }
 ];
 
-async function getOverrides() {
-  const data = await kv.get(KEY);
-  return data || {};
+async function getAll() {
+  let data = await kv.get(KEY);
+  if (!data) {
+    await kv.set(KEY, seedMatches);
+    data = seedMatches;
+  }
+  return data;
 }
 
-// Data "hidup" = data statis _data.js + override terbaru dari KV
-async function getMatches() {
-  const overrides = await getOverrides();
-  return staticMatches.map((m) => {
-    const o = overrides[m.id];
-    return o ? { ...m, ...o } : m;
-  });
+async function saveAll(matches) {
+  await kv.set(KEY, matches);
+  return matches;
 }
 
-async function updateMatch(id, updates) {
-  const overrides = await getOverrides();
-  const current = overrides[String(id)] || {};
+async function create(match) {
+  const matches = await getAll();
+  const id = match.id && String(match.id).trim() ? String(match.id).trim() : String(Date.now());
 
-  const safeUpdates = {};
-  for (const key of EDITABLE_FIELDS) {
-    if (key in updates) safeUpdates[key] = updates[key];
+  if (matches.some((m) => m.id === id)) {
+    throw new Error(`Pertandingan dengan id "${id}" sudah ada`);
   }
 
-  overrides[String(id)] = { ...current, ...safeUpdates };
-  await kv.set(KEY, overrides);
+  const newMatch = {
+    id,
+    league: match.league || "",
+    home: match.home || "",
+    away: match.away || "",
+    homeColor: match.homeColor || "#1F4D2E",
+    awayColor: match.awayColor || "#1F4D2E",
+    title: match.title || `${match.home} vs ${match.away}`,
+    time: match.time || "",
+    status: match.status || "upcoming",
+    homeScore: match.homeScore ?? null,
+    awayScore: match.awayScore ?? null,
+    htScore: match.htScore || "-",
+    cornerHome: match.cornerHome ?? 0,
+    cornerAway: match.cornerAway ?? 0,
+    streamType: match.streamType || "iframe",
+    streamUrl: match.streamUrl || "",
+    thumbnail: match.thumbnail || ""
+  };
 
-  const base = staticMatches.find((m) => m.id === String(id));
-  if (!base) return null;
-  return { ...base, ...overrides[String(id)] };
+  matches.unshift(newMatch);
+  await saveAll(matches);
+  return newMatch;
 }
 
-// Setara buildClubs() di _data.js, tapi menerima array matches sebagai parameter
-// supaya bisa dipakai dengan data yang sudah digabung override (bukan cuma data statis)
+async function update(id, updates) {
+  const matches = await getAll();
+  const idx = matches.findIndex((m) => m.id === String(id));
+  if (idx === -1) return null;
+
+  matches[idx] = { ...matches[idx], ...updates, id: matches[idx].id };
+  await saveAll(matches);
+  return matches[idx];
+}
+
+async function remove(id) {
+  const matches = await getAll();
+  const filtered = matches.filter((m) => m.id !== String(id));
+  if (filtered.length === matches.length) return false;
+  await saveAll(filtered);
+  return true;
+}
+
+// Setara buildClubs() versi lama di _data.js, menerima array matches sebagai parameter
 function buildClubsFrom(matches) {
   const clubMap = new Map();
 
@@ -81,4 +178,4 @@ function buildClubsFrom(matches) {
   return Array.from(clubMap.values());
 }
 
-module.exports = { getMatches, updateMatch, buildClubsFrom };
+module.exports = { getAll, create, update, remove, buildClubsFrom };
