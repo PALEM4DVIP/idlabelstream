@@ -1,9 +1,16 @@
 // api/_store.js
-// KV sekarang jadi SUMBER DATA UTAMA (bukan cuma override) supaya admin
-// bisa nambah pertandingan baru / edit jadwal / hapus, bukan cuma update skor.
-// Saat pertama kali diakses dan KV masih kosong, di-seed dari data awal di bawah.
+// Redis (via Upstash, dipasang dari Vercel Marketplace) jadi SUMBER DATA UTAMA
+// supaya admin bisa nambah pertandingan baru / edit jadwal / hapus, bukan cuma
+// update skor. Saat pertama kali diakses dan datanya masih kosong, di-seed dari
+// data awal di bawah.
+//
+// Catatan: Vercel KV (paket @vercel/kv) sudah dipensiunkan per akhir 2024/2025.
+// Sekarang pakai @upstash/redis, dipasang lewat Marketplace -> Upstash for Redis.
+// Env var otomatis ke-inject dengan nama KV_REST_API_URL / KV_REST_API_TOKEN
+// (kompatibel) atau UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN.
 
-const { kv } = require("@vercel/kv");
+const { Redis } = require("@upstash/redis");
+const redis = Redis.fromEnv();
 
 const KEY = "matches:list";
 
@@ -88,16 +95,16 @@ const seedMatches = [
 ];
 
 async function getAll() {
-  let data = await kv.get(KEY);
+  let data = await redis.get(KEY);
   if (!data) {
-    await kv.set(KEY, seedMatches);
+    await redis.set(KEY, seedMatches);
     data = seedMatches;
   }
   return data;
 }
 
 async function saveAll(matches) {
-  await kv.set(KEY, matches);
+  await redis.set(KEY, matches);
   return matches;
 }
 
