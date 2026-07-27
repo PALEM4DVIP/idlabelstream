@@ -1,6 +1,11 @@
-const { matches } = require('./_data');
+const { getAll } = require('./_store');
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.status(200).json(matches.map(({ streamUrl, ...rest }) => rest));
+  try {
+    const matches = await getAll();
+    res.status(200).json(matches.map(({ streamUrl, ...rest }) => rest));
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal memuat data. Pastikan Vercel KV sudah terhubung ke project.', detail: err.message });
+  }
 };
