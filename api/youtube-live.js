@@ -3,8 +3,8 @@
 // Menggunakan YouTube Data API v3 — butuh env var YOUTUBE_API_KEY di Vercel.
 
 const CHANNELS = [
-  { handle: 'ybrap', name: 'Reza Arap (YB)' },
-  { handle: 'CazeTV', name: 'CazeTV' }
+  { handle: 'ybrap', name: 'AFF Championship 2026' },
+  { handle: 'CazeTV', name: 'Live Football' }
 ];
 
 // Cache in-memory sederhana supaya tidak boros kuota API
